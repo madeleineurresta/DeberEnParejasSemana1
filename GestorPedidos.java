@@ -2,7 +2,6 @@ import java.sql.*;
 import java.util.List;
 
 public class GestorPedidos {
-
     private Connection conexionBD;
     private ClienteValidator validator;
     private DescuentoStrategyFactory factory;
@@ -10,7 +9,7 @@ public class GestorPedidos {
     public GestorPedidos() {
         try {
             this.conexionBD = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/tienda", "root", "");
+                    "jdbc:mysql://localhost:3306/tienda", "root", "admin123");
             this.validator = new ClienteValidator();
             this.factory = new DescuentoStrategyFactory();
         } catch (SQLException e) {
@@ -24,19 +23,26 @@ public class GestorPedidos {
                                List<Integer> cantidades,
                                String tipoCliente) {
 
+        // Validación delegada
         if (!validator.validar(nombreCliente, emailCliente)) {
             return;
         }
 
+        // Cálculos
         double subtotal = calcularSubtotal(nombresProductos, preciosProductos, cantidades);
         DescuentoStrategy strategy = factory.getStrategy(tipoCliente);
         double descuento = strategy.calcularDescuento(subtotal);
         double impuesto = (subtotal - descuento) * 0.12;
         double total = subtotal - descuento + impuesto;
 
+        // Guardar en BD
         guardarEnBD(nombreCliente, total);
+
+        // Generar factura
         generarFactura(nombreCliente, emailCliente, nombresProductos,
-                      cantidades, preciosProductos, subtotal, descuento, impuesto, total);
+                cantidades, preciosProductos, subtotal, descuento, impuesto, total);
+
+        // Enviar email
         enviarEmail(emailCliente, nombreCliente, total);
 
         System.out.println("[LOG] Pedido procesado para " + nombreCliente + " - Total: $" + total);
@@ -51,6 +57,8 @@ public class GestorPedidos {
         enviarEmailCancelacion(emailCliente, nombreCliente, idPedido);
     }
 
+    // ===== MÉTODOS PRIVADOS (cálculos) =====
+
     private double calcularSubtotal(List<String> nombres, List<Double> precios, List<Integer> cantidades) {
         double subtotal = 0;
         for (int i = 0; i < nombres.size(); i++) {
@@ -59,11 +67,13 @@ public class GestorPedidos {
         return subtotal;
     }
 
+    // ===== MÉTODOS PRIVADOS (BD) =====
+
     private void guardarEnBD(String nombreCliente, double total) {
         try {
             Statement stmt = conexionBD.createStatement();
-            String sql = "INSERT INTO pedidos (cliente, total) VALUES ('"
-                + nombreCliente + "', " + total + ")";
+            String sql = "INSERT INTO pedidos (cliente, total) VALUES ('" +
+                    nombreCliente + "', " + total + ")";
             stmt.executeUpdate(sql);
         } catch (SQLException e) {
             System.out.println("Error al guardar el pedido: " + e.getMessage());
@@ -80,6 +90,8 @@ public class GestorPedidos {
         }
     }
 
+    // ===== MÉTODOS PRIVADOS (factura) =====
+
     private void generarFactura(String nombre, String email, List<String> nombres,
                                 List<Integer> cantidades, List<Double> precios,
                                 double subtotal, double descuento, double impuesto, double total) {
@@ -88,10 +100,12 @@ public class GestorPedidos {
             writer.write("FACTURA\n");
             writer.write("Cliente: " + nombre + "\n");
             writer.write("Email: " + email + "\n");
+
             for (int i = 0; i < nombres.size(); i++) {
-                writer.write(nombres.get(i) + " x" + cantidades.get(i)
-                    + " = $" + (precios.get(i) * cantidades.get(i)) + "\n");
+                writer.write(nombres.get(i) + " x" + cantidades.get(i) +
+                        " = $" + (precios.get(i) * cantidades.get(i)) + "\n");
             }
+
             writer.write("Subtotal: $" + subtotal + "\n");
             writer.write("Descuento: $" + descuento + "\n");
             writer.write("Impuesto: $" + impuesto + "\n");
@@ -101,6 +115,8 @@ public class GestorPedidos {
             System.out.println("Error al generar la factura: " + e.getMessage());
         }
     }
+
+    // ===== MÉTODOS PRIVADOS (email) =====
 
     private void enviarEmail(String email, String nombre, double total) {
         System.out.println("Enviando correo a " + email + "...");
