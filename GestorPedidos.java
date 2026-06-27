@@ -10,7 +10,7 @@ public class GestorPedidos {
     public GestorPedidos() {
         try {
             this.conexionBD = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/tienda", "root", "admin123");
+                "jdbc:mysql://localhost:3306/tienda", "root", "");
             this.validator = new ClienteValidator();
             this.factory = new DescuentoStrategyFactory();
         } catch (SQLException e) {
