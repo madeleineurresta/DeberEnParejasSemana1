@@ -7,11 +7,11 @@ public class GestorPedidos {
     private DescuentoStrategyFactory factory;
 
     public GestorPedidos() {
+        this.validator = new ClienteValidator();
+        this.factory = new DescuentoStrategyFactory();
         try {
             this.conexionBD = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/tienda", "root", "admin123");
-            this.validator = new ClienteValidator();
-            this.factory = new DescuentoStrategyFactory();
+                    "jdbc:mysql://localhost:3306/tienda", "root", "");
         } catch (SQLException e) {
             e.printStackTrace();
         }
