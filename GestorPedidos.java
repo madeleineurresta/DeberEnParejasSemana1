@@ -5,11 +5,15 @@ import java.sql.*;
 public class GestorPedidos {
 
     private Connection conexionBD;
+    private ClienteValidator validator;
+    private DescuentoStrategyFactory factory;
 
     public GestorPedidos() {
         try {
             this.conexionBD = DriverManager.getConnection(
                 "jdbc:mysql://localhost:3306/tienda", "root", "admin123");
+            this.validator = new ClienteValidator();
+            this.factory = new DescuentoStrategyFactory();
         } catch (SQLException e) {
             e.printStackTrace();
         }
